@@ -1,8 +1,84 @@
 {
   "accounts": [
     {
-      "username": "elonmusk",
-      "note": "Example account - remove and add your own"
+      "username": "karpathy",
+      "note": "LLM之王（从零教你造大模型）"
+    },
+    {
+      "username": "steipete",
+      "note": "OpenClaw缔造者（实战黑马）"
+    },
+    {
+      "username": "gregisenberg",
+      "note": "创业点子之神（每天脑洞大开）"
+    },
+    {
+      "username": "rileybrown",
+      "note": "Vibecode天皇（氛围感拉满的代码）"
+    },
+    {
+      "username": "corbin_braun",
+      "note": "Cursor之王（AI写代码最爽工具）"
+    },
+    {
+      "username": "jackfriks",
+      "note": "单人App之王（真实数据说话）"
+    },
+    {
+      "username": "levelsio",
+      "note": "单人创业之神（不靠VC硬核造产品）"
+    },
+    {
+      "username": "marclou",
+      "note": "单人创业之神（又一个狠人）"
+    },
+    {
+      "username": "EXM7777",
+      "note": "AI运营+系统之王（全栈效率拉满）"
+    },
+    {
+      "username": "eptwts",
+      "note": "AI赚钱推特之王（变现套路最狠）"
+    },
+    {
+      "username": "godofprompt",
+      "note": "Prompt之神（调教AI的顶级艺术）"
+    },
+    {
+      "username": "vasuman",
+      "note": "AI Agent之王（智能体实战派）"
+    },
+    {
+      "username": "AmirMushich",
+      "note": "AI广告之王（投放直接起飞）"
+    },
+    {
+      "username": "0xROAS",
+      "note": "AI UGC之王（病毒式用户内容狂魔）"
+    },
+    {
+      "username": "egeberkina",
+      "note": "AI图像之王（画面感炸裂）"
+    },
+    {
+      "username": "MengTo",
+      "note": "AI落地页之王（转化率机器）"
+    },
+    {
+      "username": "rryssf_",
+      "note": "自动化之王（懒人福音）"
+    },
+    {
+      "username": "kloss_xyz",
+      "note": "系统架构之王（底层硬核）"
+    },
+    {
+      "username": "emollick",
+      "note": "AI科学之王（最靠谱研究解读）"
+    },
+    {
+      "username": "Hesamation",
+      "note": "AI/ML综合之王（深度学习前沿）"
     }
   ]
 }

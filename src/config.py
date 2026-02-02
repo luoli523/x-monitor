@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str
     openai_model: str = "gpt-4-turbo-preview"
+    openai_max_completion_tokens: int = 16000
+    openai_temperature: float | None = None  # None means use model default
 
     # Telegram
     telegram_bot_token: str = ""
@@ -34,6 +36,13 @@ class Settings(BaseSettings):
     # Schedule
     summary_cron_hour: int = 8
     summary_cron_minute: int = 0
+
+    # Rate limiting (for free API tier - conservative settings)
+    rate_limit_delay: float = 15.0  # Delay between each account (seconds)
+    rate_limit_batch_size: int = 3  # Number of accounts per batch
+    rate_limit_batch_delay: float = 180.0  # Delay between batches (seconds) - 3 minutes
+    rate_limit_max_retries: int = 5  # Max retries on rate limit error
+    rate_limit_retry_base_delay: float = 120.0  # Base delay for exponential backoff (seconds)
 
     # Database
     database_path: str = "data/x_monitor.db"

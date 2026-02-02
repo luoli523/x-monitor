@@ -19,8 +19,20 @@ class XMonitorAgent:
         """Initialize the agent with settings."""
         self.settings = settings
         self.storage = Storage(settings.database_path)
-        self.scraper = XScraper(settings.x_bearer_token)
-        self.analyzer = LLMAnalyzer(settings.openai_api_key, settings.openai_model)
+        self.scraper = XScraper(
+            bearer_token=settings.x_bearer_token,
+            rate_limit_delay=settings.rate_limit_delay,
+            rate_limit_batch_size=settings.rate_limit_batch_size,
+            rate_limit_batch_delay=settings.rate_limit_batch_delay,
+            rate_limit_max_retries=settings.rate_limit_max_retries,
+            rate_limit_retry_base_delay=settings.rate_limit_retry_base_delay,
+        )
+        self.analyzer = LLMAnalyzer(
+            api_key=settings.openai_api_key,
+            model=settings.openai_model,
+            max_completion_tokens=settings.openai_max_completion_tokens,
+            temperature=settings.openai_temperature,
+        )
 
         # Initialize notifiers
         self.notifiers: list[EmailNotifier | TelegramNotifier] = []

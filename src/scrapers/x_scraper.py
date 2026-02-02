@@ -64,10 +64,11 @@ class XScraper:
             user_id = user.data.id
             display_name = user.data.name
 
-            # Fetch tweets
+            # Fetch tweets - format time as RFC3339 (Twitter API requirement)
+            start_time_str = since.strftime("%Y-%m-%dT%H:%M:%SZ")
             response = self.client.get_users_tweets(
                 id=user_id,
-                start_time=since.isoformat(),
+                start_time=start_time_str,
                 max_results=min(max_results, 100),
                 tweet_fields=[
                     "created_at",

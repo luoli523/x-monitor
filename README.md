@@ -43,19 +43,43 @@ cp .env.example .env
 - **TELEGRAM_BOT_TOKEN**: Create via [@BotFather](https://t.me/BotFather)
 - **SMTP credentials**: For email notifications
 
-## Usage
+3. Configure accounts to monitor:
 
-### Add accounts to monitor
+Edit `config/accounts.json` to add Twitter accounts you want to monitor:
 
-```bash
-x-monitor add elonmusk
-x-monitor add OpenAI
+```json
+{
+  "accounts": [
+    {
+      "username": "elonmusk",
+      "note": "Tesla/SpaceX CEO"
+    },
+    {
+      "username": "OpenAI",
+      "note": "AI Research Company"
+    }
+  ]
+}
 ```
+
+## Usage
 
 ### List monitored accounts
 
 ```bash
 x-monitor list
+```
+
+### Add/Remove accounts
+
+You can also use CLI commands (they will modify `config/accounts.json`):
+
+```bash
+# Add account
+x-monitor add elonmusk
+
+# Remove account
+x-monitor remove elonmusk
 ```
 
 ### Run analysis immediately

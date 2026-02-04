@@ -11,25 +11,20 @@ from src.models import Account, Tweet, DailySummary
 
 
 class Storage:
-    """SQLite-based storage for accounts and summaries."""
+    """Storage for accounts (JSON file) and summaries (SQLite)."""
 
-    def __init__(self, db_path: str):
-        """Initialize storage with database path."""
+    def __init__(self, db_path: str, accounts_config_path: str = "config/accounts.json"):
+        """Initialize storage with database path and accounts config path."""
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.accounts_config_path = Path(accounts_config_path)
+        # Ensure config directory exists
+        self.accounts_config_path.parent.mkdir(parents=True, exist_ok=True)
 
     async def initialize(self) -> None:
         """Create database tables if they don't exist."""
         async with aiosqlite.connect(self.db_path) as db:
             await db.executescript("""
-                CREATE TABLE IF NOT EXISTS accounts (
-                    username TEXT PRIMARY KEY,
-                    user_id TEXT,
-                    display_name TEXT,
-                    description TEXT,
-                    added_at TEXT NOT NULL
-                );
-
                 CREATE TABLE IF NOT EXISTS summaries (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     date TEXT NOT NULL UNIQUE,
@@ -45,80 +40,122 @@ class Storage:
             """)
             await db.commit()
             logger.info(f"Database initialized at {self.db_path}")
+        
+        # Initialize accounts config file if it doesn't exist
+        if not self.accounts_config_path.exists():
+            self.accounts_config_path.write_text(json.dumps({"accounts": []}, indent=2, ensure_ascii=False))
+            logger.info(f"Created accounts config file at {self.accounts_config_path}")
 
-    # Account management
+    # Account management (JSON-based)
+    def _load_accounts_config(self) -> dict:
+        """Load accounts configuration from JSON file."""
+        try:
+            if self.accounts_config_path.exists():
+                content = self.accounts_config_path.read_text(encoding="utf-8")
+                return json.loads(content)
+            return {"accounts": []}
+        except Exception as e:
+            logger.error(f"Failed to load accounts config: {e}")
+            return {"accounts": []}
+
+    def _save_accounts_config(self, config: dict) -> bool:
+        """Save accounts configuration to JSON file."""
+        try:
+            self.accounts_config_path.write_text(
+                json.dumps(config, indent=2, ensure_ascii=False),
+                encoding="utf-8"
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save accounts config: {e}")
+            return False
+
     async def add_account(self, account: Account) -> bool:
-        """Add an account to monitor."""
-        async with aiosqlite.connect(self.db_path) as db:
-            try:
-                await db.execute(
-                    """
-                    INSERT OR REPLACE INTO accounts
-                    (username, user_id, display_name, description, added_at)
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
-                    (
-                        account.username,
-                        account.user_id,
-                        account.display_name,
-                        account.description,
-                        account.added_at.isoformat(),
-                    ),
-                )
-                await db.commit()
-                logger.info(f"Added account: @{account.username}")
+        """Add an account to the JSON config file."""
+        try:
+            config = self._load_accounts_config()
+            
+            # Check if account already exists
+            existing_usernames = {acc["username"] for acc in config["accounts"]}
+            if account.username in existing_usernames:
+                logger.warning(f"Account @{account.username} already exists in config")
                 return True
-            except Exception as e:
-                logger.error(f"Failed to add account {account.username}: {e}")
-                return False
+            
+            # Add new account
+            config["accounts"].append({
+                "username": account.username,
+                "note": account.display_name or account.description or ""
+            })
+            
+            if self._save_accounts_config(config):
+                logger.info(f"Added account to config: @{account.username}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Failed to add account {account.username}: {e}")
+            return False
 
     async def remove_account(self, username: str) -> bool:
-        """Remove an account from monitoring."""
-        async with aiosqlite.connect(self.db_path) as db:
-            cursor = await db.execute(
-                "DELETE FROM accounts WHERE username = ?", (username,)
-            )
-            await db.commit()
-            if cursor.rowcount > 0:
-                logger.info(f"Removed account: @{username}")
-                return True
+        """Remove an account from the JSON config file."""
+        try:
+            config = self._load_accounts_config()
+            original_count = len(config["accounts"])
+            
+            # Filter out the account
+            config["accounts"] = [
+                acc for acc in config["accounts"]
+                if acc["username"] != username
+            ]
+            
+            if len(config["accounts"]) < original_count:
+                if self._save_accounts_config(config):
+                    logger.info(f"Removed account from config: @{username}")
+                    return True
+            else:
+                logger.warning(f"Account @{username} not found in config")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to remove account {username}: {e}")
             return False
 
     async def get_accounts(self) -> list[Account]:
-        """Get all monitored accounts."""
-        async with aiosqlite.connect(self.db_path) as db:
-            db.row_factory = aiosqlite.Row
-            cursor = await db.execute("SELECT * FROM accounts ORDER BY added_at")
-            rows = await cursor.fetchall()
-
-            return [
-                Account(
-                    username=row["username"],
-                    user_id=row["user_id"],
-                    display_name=row["display_name"],
-                    description=row["description"],
-                    added_at=datetime.fromisoformat(row["added_at"]),
-                )
-                for row in rows
-            ]
+        """Get all monitored accounts from JSON config file."""
+        try:
+            config = self._load_accounts_config()
+            accounts = []
+            
+            for acc_data in config["accounts"]:
+                username = acc_data.get("username", "").strip()
+                if username:
+                    accounts.append(
+                        Account(
+                            username=username,
+                            display_name=acc_data.get("note", ""),
+                            description=acc_data.get("note", ""),
+                        )
+                    )
+            
+            logger.info(f"Loaded {len(accounts)} accounts from config file")
+            return accounts
+        except Exception as e:
+            logger.error(f"Failed to get accounts: {e}")
+            return []
 
     async def get_account(self, username: str) -> Account | None:
-        """Get a specific account."""
-        async with aiosqlite.connect(self.db_path) as db:
-            db.row_factory = aiosqlite.Row
-            cursor = await db.execute(
-                "SELECT * FROM accounts WHERE username = ?", (username,)
-            )
-            row = await cursor.fetchone()
-
-            if row:
-                return Account(
-                    username=row["username"],
-                    user_id=row["user_id"],
-                    display_name=row["display_name"],
-                    description=row["description"],
-                    added_at=datetime.fromisoformat(row["added_at"]),
-                )
+        """Get a specific account from JSON config file."""
+        try:
+            config = self._load_accounts_config()
+            
+            for acc_data in config["accounts"]:
+                if acc_data.get("username") == username:
+                    return Account(
+                        username=username,
+                        display_name=acc_data.get("note", ""),
+                        description=acc_data.get("note", ""),
+                    )
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get account {username}: {e}")
             return None
 
     # Summary management

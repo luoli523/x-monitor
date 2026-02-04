@@ -27,55 +27,49 @@ class XScraper:
             rate_limit_delay: Delay between each account request (seconds)
             rate_limit_batch_size: Number of accounts to process before taking a longer break
             rate_limit_batch_delay: Delay between batches (seconds)
-            rate_limit_max_retries: Maximum retries on rate limit error
-            rate_limit_retry_base_delay: Base delay for exponential backoff (seconds)
+            rate_limit_max_retries: [DEPRECATED] No longer used, kept for compatibility
+            rate_limit_retry_base_delay: [DEPRECATED] No longer used, kept for compatibility
+        
+        Note:
+            When rate limit is hit, the scraper will skip the request and continue
+            with the next account instead of retrying.
         """
-        self.client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=True)
+        self.client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=False)
         self.rate_limit_delay = rate_limit_delay
         self.rate_limit_batch_size = rate_limit_batch_size
         self.rate_limit_batch_delay = rate_limit_batch_delay
-        self.rate_limit_max_retries = rate_limit_max_retries
-        self.rate_limit_retry_base_delay = rate_limit_retry_base_delay
+        self.rate_limit_max_retries = rate_limit_max_retries  # Kept for compatibility
+        self.rate_limit_retry_base_delay = rate_limit_retry_base_delay  # Kept for compatibility
         self._request_count = 0
 
     async def _execute_with_retry(self, func, *args, **kwargs):
-        """Execute a function with exponential backoff retry on rate limit errors.
+        """Execute a function and skip on rate limit errors.
 
         Args:
             func: The function to execute
             *args, **kwargs: Arguments to pass to the function
 
         Returns:
-            The result of the function call
+            The result of the function call, or None if rate limited
         """
-        last_exception = None
-        for attempt in range(self.rate_limit_max_retries):
-            try:
-                self._request_count += 1
-                result = func(*args, **kwargs)
-                return result
-            except tweepy.TooManyRequests as e:
-                last_exception = e
-                delay = self.rate_limit_retry_base_delay * (2 ** attempt)
-                logger.warning(
-                    f"Rate limit hit (attempt {attempt + 1}/{self.rate_limit_max_retries}). "
-                    f"Waiting {delay:.0f} seconds before retry..."
-                )
-                await asyncio.sleep(delay)
-            except tweepy.TwitterServerError as e:
-                last_exception = e
-                delay = self.rate_limit_retry_base_delay * (2 ** attempt)
-                logger.warning(
-                    f"Twitter server error (attempt {attempt + 1}/{self.rate_limit_max_retries}): {e}. "
-                    f"Waiting {delay:.0f} seconds before retry..."
-                )
-                await asyncio.sleep(delay)
-            except Exception as e:
-                logger.error(f"Unexpected error: {e}")
-                raise
-
-        logger.error(f"Max retries exceeded. Last error: {last_exception}")
-        raise last_exception
+        try:
+            self._request_count += 1
+            result = func(*args, **kwargs)
+            return result
+        except tweepy.TooManyRequests as e:
+            logger.warning(
+                f"⚠️  Rate limit hit! Skipping this request to continue processing. "
+                f"Error: {e}"
+            )
+            return None
+        except tweepy.TwitterServerError as e:
+            logger.warning(
+                f"Twitter server error: {e}. Skipping this request."
+            )
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise
 
     async def get_user_info(self, username: str) -> Account | None:
         """Fetch user information by username."""
@@ -85,6 +79,9 @@ class XScraper:
                 username=username,
                 user_fields=["id", "name", "description", "created_at"],
             )
+            if not user:
+                logger.warning(f"Skipped fetching user info for {username} due to rate limit")
+                return None
             if user.data:
                 return Account(
                     username=username,
@@ -123,8 +120,11 @@ class XScraper:
             user = await self._execute_with_retry(
                 self.client.get_user, username=username
             )
-            if not user.data:
-                logger.warning(f"User not found: {username}")
+            if not user or not user.data:
+                if not user:
+                    logger.warning(f"Skipped fetching user {username} due to rate limit")
+                else:
+                    logger.warning(f"User not found: {username}")
                 return tweets
 
             user_id = user.data.id
@@ -149,6 +149,10 @@ class XScraper:
                 expansions=["attachments.media_keys"],
                 media_fields=["url", "preview_image_url"],
             )
+
+            if not response:
+                logger.warning(f"Skipped fetching tweets from {username} due to rate limit")
+                return tweets
 
             if not response.data:
                 logger.info(f"No recent tweets from {username}")

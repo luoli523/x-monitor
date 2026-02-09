@@ -297,6 +297,50 @@ class Storage:
                 )
                 for row in rows
             ]
+    
+    async def get_tweets_between(self, start: datetime, end: datetime, username: str | None = None) -> list[Tweet]:
+        """Get tweets from local database between two times.
+        
+        Args:
+            start: Start time (inclusive)
+            end: End time (inclusive)
+            username: Optional username filter
+            
+        Returns:
+            List of tweets sorted by creation time (newest first)
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            if username:
+                cursor = await db.execute(
+                    "SELECT * FROM tweets WHERE created_at >= ? AND created_at <= ? AND author_username = ? ORDER BY created_at DESC",
+                    (start.isoformat(), end.isoformat(), username),
+                )
+            else:
+                cursor = await db.execute(
+                    "SELECT * FROM tweets WHERE created_at >= ? AND created_at <= ? ORDER BY created_at DESC",
+                    (start.isoformat(), end.isoformat()),
+                )
+            rows = await cursor.fetchall()
+
+            return [
+                Tweet(
+                    tweet_id=row["tweet_id"],
+                    author_username=row["author_username"],
+                    author_display_name=row["author_display_name"],
+                    content=row["content"],
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                    likes=row["likes"],
+                    retweets=row["retweets"],
+                    replies=row["replies"],
+                    views=row["views"],
+                    url=row["url"],
+                    is_retweet=bool(row["is_retweet"]),
+                    is_reply=bool(row["is_reply"]),
+                    media_urls=json.loads(row["media_urls"]) if row["media_urls"] else [],
+                )
+                for row in rows
+            ]
 
     # Summary management
     async def save_summary(self, summary: DailySummary) -> bool:

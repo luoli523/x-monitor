@@ -185,6 +185,59 @@ def history(ctx: click.Context, days: int) -> None:
     asyncio.run(_history())
 
 
+@cli.command()
+@click.option("--date", "-d", help="Date to regenerate report for (YYYY-MM-DD), default: today")
+@click.option("--notify", "-n", is_flag=True, help="Send notifications after regeneration")
+@click.pass_context
+def regenerate(ctx: click.Context, date: str | None, notify: bool) -> None:
+    """Regenerate report from database without fetching new tweets.
+    
+    This command uses tweets already stored in the local database to
+    regenerate the LLM analysis. Useful for:
+    - Updating analysis with improved prompts
+    - Generating reports without API calls
+    - Testing different analysis approaches
+    """
+
+    async def _regenerate() -> None:
+        from datetime import datetime, timezone
+        
+        settings = ctx.obj["settings"]
+        agent = XMonitorAgent(settings)
+        await agent.initialize()
+
+        # Parse date if provided
+        target_date = None
+        if date:
+            try:
+                target_date = datetime.strptime(date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            except ValueError:
+                click.echo(f"❌ Invalid date format: {date}. Use YYYY-MM-DD")
+                sys.exit(1)
+        
+        date_str = target_date.strftime("%Y-%m-%d") if target_date else "today"
+        click.echo(f"🔄 Regenerating report for {date_str} from database...")
+        
+        summary = await agent.regenerate_report_from_db(
+            date=target_date,
+            send_notifications=notify
+        )
+
+        if summary:
+            click.echo(f"\n✅ Report regenerated!")
+            click.echo(f"   Date: {summary.date.strftime('%Y-%m-%d')}")
+            click.echo(f"   Tweets analyzed: {summary.total_tweets}")
+            click.echo(f"   Report saved to: output/report_{summary.date.strftime('%Y-%m-%d')}.md")
+            if notify:
+                click.echo(f"   📧 Notifications sent")
+            click.echo(f"\n📊 Analysis preview:\n{summary.analysis[:300]}...")
+        else:
+            click.echo(f"❌ No tweets found in database for {date_str}")
+            sys.exit(1)
+
+    asyncio.run(_regenerate())
+
+
 def main() -> None:
     """Main entry point."""
     cli(obj={})

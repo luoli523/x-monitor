@@ -282,3 +282,62 @@ class XMonitorAgent:
     async def get_recent_summaries(self, days: int = 7) -> list[DailySummary]:
         """Get recent summaries."""
         return await self.storage.get_recent_summaries(days)
+    
+    async def regenerate_report_from_db(
+        self, 
+        date: datetime | None = None,
+        send_notifications: bool = False
+    ) -> DailySummary | None:
+        """Regenerate report from tweets stored in database.
+        
+        This command reads tweets from the local database and regenerates
+        the LLM analysis without fetching new data from X API.
+        
+        Args:
+            date: The date to regenerate report for (default: today)
+            send_notifications: Whether to send notifications after regeneration
+        
+        Returns:
+            DailySummary if successful, None otherwise
+        """
+        if date is None:
+            date = datetime.now(timezone.utc)
+        
+        logger.info(f"Regenerating report for {date.strftime('%Y-%m-%d')} from database...")
+        
+        # Load tweets from database for the specified date
+        start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        tweets = await self.storage.get_tweets_between(start_of_day, end_of_day)
+        
+        if not tweets:
+            logger.warning(f"No tweets found in database for {date.strftime('%Y-%m-%d')}")
+            return None
+        
+        logger.info(f"Loaded {len(tweets)} tweets from database")
+        
+        # Get unique authors count
+        authors = set(t.author_username for t in tweets)
+        
+        # Generate analysis with LLM
+        summary = await self.analyzer.analyze_tweets(tweets, date)
+        
+        # Save summary to database
+        await self.storage.save_summary(summary)
+        logger.info("Updated summary in database")
+        
+        # Save as Markdown
+        self._save_markdown_report(summary)
+        
+        # Send notifications if requested
+        if send_notifications:
+            for notifier in self.notifiers:
+                try:
+                    await notifier.send_summary(summary)
+                except Exception as e:
+                    logger.error(f"Failed to send notification: {e}")
+            logger.info("Notifications sent")
+        
+        logger.info(f"Report regeneration completed for {date.strftime('%Y-%m-%d')}")
+        return summary

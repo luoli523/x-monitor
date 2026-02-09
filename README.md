@@ -134,6 +134,24 @@ x-monitor run
 
 Fetches new tweets incrementally, analyzes with LLM, and sends notifications.
 
+### Regenerate report from database
+
+```bash
+# Regenerate report for today (no API calls, uses cached tweets)
+x-monitor regenerate
+
+# Regenerate report for a specific date
+x-monitor regenerate --date 2026-02-08
+
+# Regenerate and send notifications
+x-monitor regenerate --notify
+```
+
+This command reads tweets already stored in the local database and regenerates the LLM analysis without making any X API calls. Useful for:
+- Testing different analysis prompts
+- Updating reports without consuming API quota
+- Generating historical reports
+
 ### Start as a scheduled service
 
 ```bash

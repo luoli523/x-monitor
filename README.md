@@ -5,12 +5,15 @@ AI Agent for monitoring X.com (Twitter) accounts and generating daily summaries 
 ## Features
 
 - 📱 Monitor multiple X/Twitter accounts
-- 🤖 LLM-powered analysis using OpenAI GPT
-- 📊 Daily summaries with key insights
-- 📧 Email notifications
-- 📲 Telegram bot notifications
-- ⏰ Scheduled daily jobs
-- 💾 SQLite storage for history
+- 🤖 LLM-powered multi-dimensional analysis using OpenAI GPT
+- 📊 Daily summaries with key insights extraction
+- 🔄 Incremental tweet fetching (only fetch new tweets since last run)
+- 💾 User info caching (reduce API calls per run)
+- ⚡ Smart rate limiting with skip-on-limit strategy
+- 📧 Email notifications (HTML formatted reports)
+- 📲 Telegram bot notifications (auto message chunking)
+- ⏰ Cron-based scheduled daily jobs
+- 🗄️ Hybrid storage: JSON config + SQLite data persistence
 
 ## Installation
 
@@ -29,23 +32,64 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
+Requires Python 3.11+.
+
 ## Configuration
 
-1. Copy the example environment file:
+### 1. Environment variables
+
+Copy and edit the example file:
+
 ```bash
 cp .env.example .env
 ```
 
-2. Edit `.env` and fill in your credentials:
+**Required:**
 
-- **X_BEARER_TOKEN**: Get from [Twitter Developer Portal](https://developer.twitter.com/)
-- **OPENAI_API_KEY**: Get from [OpenAI](https://platform.openai.com/)
-- **TELEGRAM_BOT_TOKEN**: Create via [@BotFather](https://t.me/BotFather)
-- **SMTP credentials**: For email notifications
+| Variable | Description |
+|----------|-------------|
+| `X_BEARER_TOKEN` | X API Bearer Token ([Developer Portal](https://developer.twitter.com/)) |
+| `OPENAI_API_KEY` | OpenAI API Key ([Platform](https://platform.openai.com/)) |
 
-3. Configure accounts to monitor:
+**Optional — OpenAI:**
 
-Edit `config/accounts.json` to add Twitter accounts you want to monitor:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENAI_MODEL` | `gpt-4-turbo-preview` | Model to use for analysis |
+| `OPENAI_MAX_COMPLETION_TOKENS` | `16000` | Max completion tokens |
+| `OPENAI_TEMPERATURE` | *(model default)* | Temperature (leave empty for reasoning models) |
+
+**Optional — Telegram notifications:**
+
+| Variable | Description |
+|----------|-------------|
+| `TELEGRAM_BOT_TOKEN` | Bot token from [@BotFather](https://t.me/BotFather) |
+| `TELEGRAM_CHAT_ID` | Target chat ID |
+
+**Optional — Email notifications:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SMTP_HOST` | `smtp.gmail.com` | SMTP server |
+| `SMTP_PORT` | `587` | SMTP port (TLS) |
+| `SMTP_USER` | | Sender email |
+| `SMTP_PASSWORD` | | App-specific password |
+| `EMAIL_TO` | | Recipient email |
+
+**Optional — Scheduling & Rate limiting:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SUMMARY_CRON_HOUR` | `8` | Daily job hour (0-23) |
+| `SUMMARY_CRON_MINUTE` | `0` | Daily job minute (0-59) |
+| `DATABASE_PATH` | `data/x_monitor.db` | SQLite database path |
+| `RATE_LIMIT_DELAY` | `2.0` | Delay between accounts (seconds) |
+| `RATE_LIMIT_BATCH_SIZE` | `10` | Accounts per batch |
+| `RATE_LIMIT_BATCH_DELAY` | `10.0` | Delay between batches (seconds) |
+
+### 2. Accounts to monitor
+
+Edit `config/accounts.json` to add Twitter accounts:
 
 ```json
 {
@@ -62,6 +106,8 @@ Edit `config/accounts.json` to add Twitter accounts you want to monitor:
 }
 ```
 
+When accounts are added via CLI (`x-monitor add`), `user_id`, `display_name`, and `description` are automatically fetched from the API and cached in this file, reducing API calls on subsequent runs.
+
 ## Usage
 
 ### List monitored accounts
@@ -72,14 +118,12 @@ x-monitor list
 
 ### Add/Remove accounts
 
-You can also use CLI commands (they will modify `config/accounts.json`):
-
 ```bash
-# Add account
-x-monitor add elonmusk
+# Add account (fetches and caches user info from API)
+x-monitor add karpathy
 
 # Remove account
-x-monitor remove elonmusk
+x-monitor remove karpathy
 ```
 
 ### Run analysis immediately
@@ -88,13 +132,15 @@ x-monitor remove elonmusk
 x-monitor run
 ```
 
+Fetches new tweets incrementally, analyzes with LLM, and sends notifications.
+
 ### Start as a scheduled service
 
 ```bash
 x-monitor serve
 ```
 
-This will run the daily job at the configured time (default: 8:00 AM).
+Runs the daily job at the configured time (default: 8:00 AM). Keeps running until Ctrl+C.
 
 ### View history
 
@@ -102,25 +148,62 @@ This will run the daily job at the configured time (default: 8:00 AM).
 x-monitor history --days 7
 ```
 
+## Architecture
+
+```
+CLI (main.py)
+    │
+    ▼
+Agent (agent.py) ─── Main orchestrator
+    │
+    ├── Storage (storage.py) ─── Accounts (JSON) + Tweets/Summaries (SQLite)
+    ├── Scraper (x_scraper.py) ─── XDK API calls with rate limiting
+    ├── Analyzer (llm_analyzer.py) ─── OpenAI LLM analysis
+    └── Notifiers (email + telegram) ─── Send formatted reports
+```
+
+**Daily job flow:**
+
+1. Load accounts from `config/accounts.json`
+2. Ensure all accounts have cached `user_id` (fetch from API if missing)
+3. Build per-account "since" times from last saved tweet timestamps
+4. Fetch only **new** tweets incrementally from X API
+5. Save tweets to SQLite database
+6. Load all tweets from last 24h from local database
+7. Send to LLM for multi-dimensional analysis
+8. Save summary to database
+9. Send notifications (Email + Telegram, if configured)
+
 ## Project Structure
 
 ```
 x-monitor/
 ├── src/
-│   ├── scrapers/       # X/Twitter data fetching
-│   ├── analyzers/      # LLM analysis
+│   ├── scrapers/       # X/Twitter data fetching (XDK)
+│   ├── analyzers/      # LLM multi-dimensional analysis
 │   ├── notifiers/      # Email & Telegram notifications
-│   ├── schedulers/     # Job scheduling
-│   ├── models/         # Data models
+│   ├── schedulers/     # Cron-based job scheduling
+│   ├── models/         # Pydantic data models
 │   ├── agent.py        # Main orchestrator
-│   ├── config.py       # Settings management
-│   ├── storage.py      # SQLite persistence
-│   └── main.py         # CLI entry point
-├── config/             # Configuration files
-├── data/               # Database files
+│   ├── config.py       # Settings management (pydantic-settings)
+│   ├── storage.py      # Hybrid storage (JSON + SQLite)
+│   └── main.py         # CLI entry point (Click)
+├── config/             # accounts.json
+├── data/               # SQLite database
 ├── logs/               # Log files
 └── tests/              # Test files
 ```
+
+## Tech Stack
+
+- **X API**: [XDK](https://pypi.org/project/xdk/) (official SDK)
+- **LLM**: OpenAI GPT
+- **CLI**: Click
+- **Data validation**: Pydantic
+- **Storage**: aiosqlite + JSON
+- **Notifications**: python-telegram-bot, aiosmtplib
+- **Scheduling**: APScheduler
+- **Logging**: Loguru
 
 ## License
 

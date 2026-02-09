@@ -1,6 +1,7 @@
 """Main X Monitor Agent that orchestrates all components."""
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 from loguru import logger
 
@@ -19,6 +20,10 @@ class XMonitorAgent:
         """Initialize the agent with settings."""
         self.settings = settings
         self.storage = Storage(settings.database_path)
+        
+        # Ensure output directory exists
+        self.output_dir = Path("output")
+        self.output_dir.mkdir(exist_ok=True)
         self.scraper = XScraper(
             bearer_token=settings.x_bearer_token,
             rate_limit_delay=settings.rate_limit_delay,
@@ -205,8 +210,11 @@ class XMonitorAgent:
             # Analyze with LLM
             summary = await self.analyzer.analyze_tweets(tweets, summary_date)
 
-        # Save summary
+        # Save summary to database
         await self.storage.save_summary(summary)
+
+        # Save summary as Markdown file
+        self._save_markdown_report(summary)
 
         # Send notifications
         for notifier in self.notifiers:
@@ -217,6 +225,53 @@ class XMonitorAgent:
 
         logger.info("Daily monitoring job completed")
         return summary
+    
+    def _save_markdown_report(self, summary: DailySummary) -> None:
+        """Save the daily summary as a Markdown file.
+        
+        Args:
+            summary: The daily summary to save
+        """
+        try:
+            date_str = summary.date.strftime("%Y-%m-%d")
+            filename = self.output_dir / f"report_{date_str}.md"
+            
+            # Format report
+            report_content = f"""# X/Twitter 每日监控报告
+
+**日期：** {summary.date.strftime("%Y年%m月%d日")}  
+**监控账号：** {summary.accounts_monitored} 个  
+**推文数量：** {summary.total_tweets} 条  
+**生成时间：** {summary.generated_at.strftime("%Y-%m-%d %H:%M:%S")}
+
+---
+
+{summary.analysis}
+
+---
+
+## 关键洞察
+
+"""
+            
+            if summary.key_insights:
+                for i, insight in enumerate(summary.key_insights, 1):
+                    report_content += f"{i}. {insight}\n"
+            else:
+                report_content += "（无关键洞察）\n"
+            
+            report_content += f"""
+---
+
+*本报告由 X-Monitor AI Agent 自动生成*
+"""
+            
+            # Save to file
+            filename.write_text(report_content, encoding="utf-8")
+            logger.info(f"📄 Markdown report saved to: {filename}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save markdown report: {e}")
 
     async def get_summary(self, date: datetime | None = None) -> DailySummary | None:
         """Get summary for a specific date."""

@@ -40,6 +40,9 @@ ENV/
 data/*.db
 logs/*.log
 
+# Output reports
+output/
+
 # OS
 .DS_Store
 Thumbs.db

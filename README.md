@@ -10,8 +10,10 @@ AI Agent for monitoring X.com (Twitter) accounts and generating daily summaries 
 - 🔄 Incremental tweet fetching (only fetch new tweets since last run)
 - 💾 User info caching (reduce API calls per run)
 - ⚡ Smart rate limiting with skip-on-limit strategy
-- 📧 Email notifications (HTML formatted reports)
-- 📲 Telegram bot notifications (auto message chunking)
+- 📄 Auto-export Markdown reports to `output/` directory
+- 🔁 Regenerate reports from database (zero API calls)
+- 📧 Email notifications (beautiful HTML formatted reports)
+- 📲 Telegram bot notifications (smart chunking, full content)
 - ⏰ Cron-based scheduled daily jobs
 - 🗄️ Hybrid storage: JSON config + SQLite data persistence
 
@@ -147,10 +149,20 @@ x-monitor regenerate --date 2026-02-08
 x-monitor regenerate --notify
 ```
 
-This command reads tweets already stored in the local database and regenerates the LLM analysis without making any X API calls. Useful for:
-- Testing different analysis prompts
-- Updating reports without consuming API quota
-- Generating historical reports
+This command reads tweets already stored in the local database and regenerates the LLM analysis **without making any X API calls**. 
+
+**Use cases:**
+- 🧪 **Testing prompts** - Modified `src/analyzers/llm_analyzer.py`? Regenerate to see new analysis instantly
+- 💰 **Save API quota** - No X API or additional OpenAI calls (only LLM analysis)
+- 📜 **Historical reports** - Generate reports for past dates from cached data
+- 🔧 **Fix errors** - If a report generation failed, rerun without re-fetching tweets
+
+**What happens:**
+1. Query all tweets from database for the specified date range
+2. Send to LLM for fresh analysis using current prompts
+3. Update database summary record
+4. Generate/update Markdown report in `output/`
+5. Optionally send notifications (with `--notify` flag)
 
 ### Start as a scheduled service
 
@@ -165,6 +177,76 @@ Runs the daily job at the configured time (default: 8:00 AM). Keeps running unti
 ```bash
 x-monitor history --days 7
 ```
+
+## Output & Notifications
+
+X Monitor generates reports in **three formats**, all sharing the same structure:
+
+### 1. Markdown Files (Local)
+
+**Location:** `output/report_YYYY-MM-DD.md`
+
+- Auto-generated after each run
+- Git-ignored (`.gitignore` configured)
+- Full analysis content with formatting preserved
+- Easy to read, search, and version control manually if needed
+
+### 2. Email (HTML + Plain Text)
+
+**Format:** Beautiful HTML email with modern styling
+
+- **Metadata card** - Date, account count, tweet count, generation time
+- **Full analysis** - All analysis dimensions (not truncated)
+- **Key insights** - Highlighted in green cards
+- **Responsive design** - Works across email clients
+- **Plain text fallback** - For email clients that don't support HTML
+
+**Sample structure:**
+```
+📊 X/Twitter 每日监控报告
+┌─────────────────────────────┐
+│ 日期：2026年02月09日           │
+│ 监控账号：14 个                │
+│ 推文数量：147 条               │
+│ 生成时间：2026-02-09 18:39:19 │
+└─────────────────────────────┘
+
+[Full analysis content...]
+
+关键洞察
+✓ Insight 1
+✓ Insight 2
+```
+
+### 3. Telegram (Plain Text)
+
+**Format:** Plain text with Unicode separators
+
+- **Auto-chunking** - Messages >4096 chars split intelligently by line
+- **Full content** - No truncation (previously limited to 3000 chars)
+- **Reliable** - No Markdown parsing errors (removed complex escaping)
+- **Numbered parts** - Multi-part messages labeled `(续 2/3)`
+
+**Why plain text?** Telegram's MarkdownV2 has complex escaping rules that frequently caused parsing errors. Plain text is 100% reliable while maintaining readability.
+
+### Notification Configuration
+
+Configure in `.env`:
+
+```bash
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+EMAIL_TO=recipient@example.com
+
+# Telegram
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+Notifications are **optional** - leave variables unset to disable.
 
 ## Architecture
 
@@ -190,7 +272,15 @@ Agent (agent.py) ─── Main orchestrator
 6. Load all tweets from last 24h from local database
 7. Send to LLM for multi-dimensional analysis
 8. Save summary to database
-9. Send notifications (Email + Telegram, if configured)
+9. **Export Markdown report to `output/report_YYYY-MM-DD.md`**
+10. Send notifications (Email + Telegram, if configured)
+
+**Report formats:**
+- 📄 **Markdown file** - Saved to `output/` directory (git-ignored)
+- 📧 **Email (HTML)** - Modern styled HTML with full analysis content
+- 📲 **Telegram (Plain text)** - Auto-chunked for messages >4096 chars
+
+All three formats share the same structure: metadata + full analysis + key insights.
 
 ## Project Structure
 
@@ -206,8 +296,9 @@ x-monitor/
 │   ├── config.py       # Settings management (pydantic-settings)
 │   ├── storage.py      # Hybrid storage (JSON + SQLite)
 │   └── main.py         # CLI entry point (Click)
-├── config/             # accounts.json
-├── data/               # SQLite database
+├── config/             # Account list (accounts.json)
+├── data/               # SQLite database (tweets, summaries)
+├── output/             # Generated Markdown reports (git-ignored)
 ├── logs/               # Log files
 └── tests/              # Test files
 ```

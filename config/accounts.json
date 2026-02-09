@@ -2,83 +2,143 @@
   "accounts": [
     {
       "username": "karpathy",
-      "note": "LLM之王（从零教你造大模型）"
+      "note": "LLM之王（从零教你造大模型）",
+      "user_id": "33836629",
+      "display_name": "Andrej Karpathy",
+      "description": "Building @EurekaLabsAI. Previously Director of AI @ Tesla, founding team @ OpenAI, CS231n/PhD @ Stanford. I like to train large deep neural nets."
     },
     {
       "username": "steipete",
-      "note": "OpenClaw缔造者（实战黑马）"
+      "note": "OpenClaw缔造者（实战黑马）",
+      "user_id": "25401953",
+      "display_name": "Peter Steinberger 🦞",
+      "description": "Polyagentmorous ClawFather. Came back from retirement to mess with AI and help a lobster take over the world @openclaw🦞"
     },
     {
       "username": "gregisenberg",
-      "note": "创业点子之神（每天脑洞大开）"
+      "note": "创业点子之神（每天脑洞大开）",
+      "user_id": "14642331",
+      "display_name": "GREG ISENBERG",
+      "description": "I drop startup ideas daily. Host @startupideaspod. CEO: @latecheckoutplz we build companies like @ideabrowser, @meetLCA, @boringmarketer etc"
     },
     {
       "username": "rileybrown",
-      "note": "Vibecode天皇（氛围感拉满的代码）"
+      "note": "Vibecode天皇（氛围感拉满的代码）",
+      "user_id": "1601693298707628035",
+      "display_name": "Riley Brown",
+      "description": "Cofounder of @vibecodeapp (the #1 full stack vibe coding platform)"
     },
     {
       "username": "corbin_braun",
-      "note": "Cursor之王（AI写代码最爽工具）"
+      "note": "Cursor之王（AI写代码最爽工具）",
+      "user_id": "1594925779778871296",
+      "display_name": "corbin",
+      "description": "founder @thumio + @techsnif · backed by _cafe_"
     },
     {
       "username": "jackfriks",
-      "note": "单人App之王（真实数据说话）"
+      "note": "单人App之王（真实数据说话）",
+      "user_id": "1699591741043527680",
+      "display_name": "jack friks",
+      "description": "curious guy creating things @ https://t.co/HXWladhJaA - up and coming wife guy"
     },
     {
       "username": "levelsio",
-      "note": "单人创业之神（不靠VC硬核造产品）"
+      "note": "单人创业之神（不靠VC硬核造产品）",
+      "user_id": "1577241403",
+      "display_name": "@levelsio",
+      "description": "🇪🇺https://t.co/NdorAWqJC3 @euacc \n📸https://t.co/lAyoqmSBRX $110k/m \n🏡https://t.co/1oqUgfD6CZ $36K/m \n🛰https://t.co/ZHSvI2wjyW $38K/m \n🌍https://t.co/UXK5AFqCaQ $17K/m \n👙https://t.co/RyXpqGuFM3 $17K/m \n💾@pieter $0K/m"
     },
     {
       "username": "marclou",
-      "note": "单人创业之神（又一个狠人）"
+      "note": "单人创业之神（又一个狠人）",
+      "user_id": "2311987360",
+      "display_name": "Marc Lou",
+      "description": "🛡️ https://t.co/MZc8tG9xWi $31K/m\n🧑‍💻 https://t.co/Y30jsaHwz9 $24K/m\n📈 https://t.co/3EDxln5mdi $18K/m\n⚡️ https://t.co/vatLDmi9UG $17K/m\n🍜 https://t.co/r07EpGSYJ2 $0/m\n🧾 https://t.co/7olaOzV8Xd $0/m\n🧬 https://t.co/SfrVXVtmdA 0$/m\n\n+20 https://t.co/4zCWHGJp1S"
     },
     {
       "username": "EXM7777",
-      "note": "AI运营+系统之王（全栈效率拉满）"
+      "note": "AI运营+系统之王（全栈效率拉满）",
+      "user_id": "3033730635",
+      "display_name": "Machina",
+      "description": "running ai-powered agencies | https://t.co/fMOmHWBgHG"
     },
     {
       "username": "eptwts",
-      "note": "AI赚钱推特之王（变现套路最狠）"
+      "note": "AI赚钱推特之王（变现套路最狠）",
+      "user_id": "1360265495363145730",
+      "display_name": "EP",
+      "description": "emperor @aifrontrunners"
     },
     {
       "username": "godofprompt",
-      "note": "Prompt之神（调教AI的顶级艺术）"
+      "note": "Prompt之神（调教AI的顶级艺术）",
+      "user_id": "1643695629665722379",
+      "display_name": "God of Prompt",
+      "description": "🔑 Sharing AI Prompts, Tips & Tricks. The Biggest Collection of AI Prompts & Guides for ChatGPT, Gemini, Grok, Claude, & Midjourney AI → https://t.co/vwZZ2VSfsN"
     },
     {
       "username": "vasuman",
-      "note": "AI Agent之王（智能体实战派）"
+      "note": "AI Agent之王（智能体实战派）",
+      "user_id": "1268982340090355712",
+      "display_name": "vas",
+      "description": "CEO @varickai | AI Agents for Enterprise: https://t.co/wNoXwYlxhd | prev. @meta"
     },
     {
       "username": "AmirMushich",
-      "note": "AI广告之王（投放直接起飞）"
+      "note": "AI广告之王（投放直接起飞）",
+      "user_id": "249795230",
+      "display_name": "AmirMušić",
+      "description": "Creative Director. Ex-Warner Music, PepsiCo, Spotify. Fusing 10+ yr of brand & ad design with AI. Collabs: amirmushichba@gmail.com"
     },
     {
       "username": "0xROAS",
-      "note": "AI UGC之王（病毒式用户内容狂魔）"
+      "note": "AI UGC之王（病毒式用户内容狂魔）",
+      "user_id": "1336528268766441474",
+      "display_name": "0x ROAS",
+      "description": "everything’s high risk if you’re a p*ssy. I treat ad spend like a venture capitalist: seeking asymmetric returns."
     },
     {
       "username": "egeberkina",
-      "note": "AI图像之王（画面感炸裂）"
+      "note": "AI图像之王（画面感炸裂）",
+      "user_id": "1790083138959400961",
+      "display_name": "Ege",
+      "description": "Art Director | Daily Image Drops | AI Explorer | Prompt & JSON & SREF share"
     },
     {
       "username": "MengTo",
-      "note": "AI落地页之王（转化率机器）"
+      "note": "AI落地页之王（转化率机器）",
+      "user_id": "5797422",
+      "display_name": "Meng To",
+      "description": "Founder at @designcodeio and https://t.co/Kpiogf2zVu. I teach designers code and developers design."
     },
     {
       "username": "rryssf_",
-      "note": "自动化之王（懒人福音）"
+      "note": "自动化之王（懒人福音）",
+      "user_id": "1666103476945031168",
+      "display_name": "Robert Youssef",
+      "description": "AI Automation Architect, Co-Founder @godofprompt"
     },
     {
       "username": "kloss_xyz",
-      "note": "系统架构之王（底层硬核）"
+      "note": "系统架构之王（底层硬核）",
+      "user_id": "1470503969789251589",
+      "display_name": "klöss",
+      "description": "AI Educator, Designer & Developer | @psychanon CEO Building AI-powered brands, workflows, and apps."
     },
     {
       "username": "emollick",
-      "note": "AI科学之王（最靠谱研究解读）"
+      "note": "AI科学之王（最靠谱研究解读）",
+      "user_id": "39125788",
+      "display_name": "Ethan Mollick",
+      "description": "Professor @Wharton studying AI, innovation & startups. Democratizing education using tech\nBook: https://t.co/CSmipbJ2jV\nSubstack: https://t.co/UIBhxu4bgq"
     },
     {
       "username": "Hesamation",
-      "note": "AI/ML综合之王（深度学习前沿）"
+      "note": "AI/ML综合之王（深度学习前沿）",
+      "user_id": "1836078160653246464",
+      "display_name": "ℏεsam",
+      "description": "ai/ml • giving birth to agents in my spare time"
     }
   ]
 }

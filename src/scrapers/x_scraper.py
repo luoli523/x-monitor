@@ -86,9 +86,9 @@ class XScraper:
             if data:
                 return Account(
                     username=username,
-                    user_id=str(data.id),
-                    display_name=data.name,
-                    description=data.description,
+                    user_id=str(data['id']),
+                    display_name=data.get('name'),
+                    description=data.get('description'),
                 )
             return None
         except Exception as e:
@@ -133,8 +133,8 @@ class XScraper:
                         logger.warning(f"User not found: {username}")
                     return tweets
 
-                user_id = user_response.data.id
-                display_name = user_response.data.name
+                user_id = user_response.data['id']
+                display_name = user_response.data.get('name', username)
 
                 # Small delay between getting user and getting tweets
                 await asyncio.sleep(1)
@@ -142,7 +142,7 @@ class XScraper:
             # Fetch tweets - format time as RFC3339 (X API requirement)
             start_time_str = since.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-            # get_posts returns an iterator; we only need the first page
+            # Get user tweets (using XDK's users.get_posts - returns a generator)
             posts_iter = await self._execute_with_retry(
                 self.client.users.get_posts,
                 id=user_id,
@@ -162,8 +162,12 @@ class XScraper:
                 logger.warning(f"Skipped fetching tweets from {username} due to rate limit")
                 return tweets
 
-            # Get first page from the iterator
-            response = next(posts_iter, None)
+            # Get first page from generator
+            try:
+                response = next(posts_iter, None)
+            except StopIteration:
+                response = None
+            
             if not response or not response.data:
                 logger.info(f"No recent tweets from {username}")
                 return tweets
@@ -171,50 +175,62 @@ class XScraper:
             # Process media
             media_map = {}
             includes = getattr(response, "includes", None)
-            if includes:
-                media_list = getattr(includes, "media", None)
-                if media_list:
-                    for media in media_list:
-                        media_map[media.media_key] = getattr(media, "url", None) or getattr(
-                            media, "preview_image_url", None
-                        )
+            if includes and isinstance(includes, dict):
+                media_list = includes.get("media", [])
+                for media in media_list:
+                    if isinstance(media, dict):
+                        media_key = media.get("media_key")
+                        media_url = media.get("url") or media.get("preview_image_url")
+                        if media_key and media_url:
+                            media_map[media_key] = media_url
 
             for tweet in response.data:
+                # XDK returns tweets as dicts
+                if not isinstance(tweet, dict):
+                    continue
+                
                 # Check if retweet or reply
                 is_retweet = False
                 is_reply = False
-                referenced_tweets = getattr(tweet, "referenced_tweets", None)
+                referenced_tweets = tweet.get("referenced_tweets", [])
                 if referenced_tweets:
                     for ref in referenced_tweets:
-                        if ref.type == "retweeted":
+                        ref_type = ref.get("type") if isinstance(ref, dict) else getattr(ref, "type", None)
+                        if ref_type == "retweeted":
                             is_retweet = True
-                        elif ref.type == "replied_to":
+                        elif ref_type == "replied_to":
                             is_reply = True
 
                 # Get media URLs
                 media_urls = []
-                attachments = getattr(tweet, "attachments", None)
-                if attachments:
-                    media_keys = getattr(attachments, "media_keys", None)
-                    if media_keys:
-                        for key in media_keys:
-                            if key in media_map and media_map[key]:
-                                media_urls.append(media_map[key])
+                attachments = tweet.get("attachments")
+                if attachments and isinstance(attachments, dict):
+                    media_keys = attachments.get("media_keys", [])
+                    for key in media_keys:
+                        if key in media_map:
+                            media_urls.append(media_map[key])
 
-                metrics = getattr(tweet, "public_metrics", None)
+                metrics = tweet.get("public_metrics", {})
+
+                # Parse created_at if it's a string
+                created_at = tweet.get("created_at")
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                elif created_at is None:
+                    created_at = datetime.now(timezone.utc)
 
                 tweets.append(
                     Tweet(
-                        tweet_id=str(tweet.id),
+                        tweet_id=str(tweet.get("id")),
                         author_username=username,
                         author_display_name=display_name,
-                        content=tweet.text,
-                        created_at=tweet.created_at,
-                        likes=getattr(metrics, "like_count", 0) if metrics else 0,
-                        retweets=getattr(metrics, "retweet_count", 0) if metrics else 0,
-                        replies=getattr(metrics, "reply_count", 0) if metrics else 0,
-                        views=getattr(metrics, "impression_count", None) if metrics else None,
-                        url=f"https://x.com/{username}/status/{tweet.id}",
+                        content=tweet.get("text", ""),
+                        created_at=created_at,
+                        likes=metrics.get("like_count", 0) if metrics else 0,
+                        retweets=metrics.get("retweet_count", 0) if metrics else 0,
+                        replies=metrics.get("reply_count", 0) if metrics else 0,
+                        views=metrics.get("impression_count") if metrics else None,
+                        url=f"https://x.com/{username}/status/{tweet.get('id')}",
                         is_retweet=is_retweet,
                         is_reply=is_reply,
                         media_urls=media_urls,

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "AI Agent for monitoring X.com accounts and generating daily summaries"
 requires-python = ">=3.11"
 dependencies = [
-    "tweepy>=4.14.0",          # Twitter/X API
+    "xdk>=0.5.0",              # X API official SDK
     "openai>=1.0.0",           # OpenAI API
     "python-telegram-bot>=20.0", # Telegram notifications
     "aiosmtplib>=3.0.0",       # Async email

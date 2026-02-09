@@ -1,45 +1,40 @@
-"""X/Twitter scraper using official API."""
+"""X/Twitter scraper using official XDK."""
 
 import asyncio
 from datetime import datetime, timedelta, timezone
 from loguru import logger
-import tweepy
+from requests.exceptions import HTTPError
+from xdk import Client
 
 from src.models import Tweet, Account
 
 
 class XScraper:
-    """Scraper for X/Twitter using official API v2."""
+    """Scraper for X/Twitter using official API v2 (XDK)."""
 
     def __init__(
         self,
         bearer_token: str,
-        rate_limit_delay: float = 5.0,
-        rate_limit_batch_size: int = 5,
-        rate_limit_batch_delay: float = 60.0,
-        rate_limit_max_retries: int = 3,
-        rate_limit_retry_base_delay: float = 60.0,
+        rate_limit_delay: float = 2.0,
+        rate_limit_batch_size: int = 10,
+        rate_limit_batch_delay: float = 10.0,
     ):
         """Initialize the scraper with API credentials and rate limit settings.
 
         Args:
-            bearer_token: Twitter API v2 bearer token
+            bearer_token: X API v2 bearer token
             rate_limit_delay: Delay between each account request (seconds)
             rate_limit_batch_size: Number of accounts to process before taking a longer break
             rate_limit_batch_delay: Delay between batches (seconds)
-            rate_limit_max_retries: [DEPRECATED] No longer used, kept for compatibility
-            rate_limit_retry_base_delay: [DEPRECATED] No longer used, kept for compatibility
-        
+
         Note:
             When rate limit is hit, the scraper will skip the request and continue
             with the next account instead of retrying.
         """
-        self.client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=False)
+        self.client = Client(bearer_token=bearer_token)
         self.rate_limit_delay = rate_limit_delay
         self.rate_limit_batch_size = rate_limit_batch_size
         self.rate_limit_batch_delay = rate_limit_batch_delay
-        self.rate_limit_max_retries = rate_limit_max_retries  # Kept for compatibility
-        self.rate_limit_retry_base_delay = rate_limit_retry_base_delay  # Kept for compatibility
         self._request_count = 0
 
     async def _execute_with_retry(self, func, *args, **kwargs):
@@ -56,17 +51,22 @@ class XScraper:
             self._request_count += 1
             result = func(*args, **kwargs)
             return result
-        except tweepy.TooManyRequests as e:
-            logger.warning(
-                f"⚠️  Rate limit hit! Skipping this request to continue processing. "
-                f"Error: {e}"
-            )
-            return None
-        except tweepy.TwitterServerError as e:
-            logger.warning(
-                f"Twitter server error: {e}. Skipping this request."
-            )
-            return None
+        except HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status == 429:
+                logger.warning(
+                    f"⚠️  Rate limit hit! Skipping this request to continue processing. "
+                    f"Error: {e}"
+                )
+                return None
+            elif status is not None and status >= 500:
+                logger.warning(
+                    f"X API server error ({status}): {e}. Skipping this request."
+                )
+                return None
+            else:
+                logger.error(f"HTTP error ({status}): {e}")
+                raise
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             raise
@@ -74,20 +74,21 @@ class XScraper:
     async def get_user_info(self, username: str) -> Account | None:
         """Fetch user information by username."""
         try:
-            user = await self._execute_with_retry(
-                self.client.get_user,
+            response = await self._execute_with_retry(
+                self.client.users.get_by_username,
                 username=username,
                 user_fields=["id", "name", "description", "created_at"],
             )
-            if not user:
+            if not response:
                 logger.warning(f"Skipped fetching user info for {username} due to rate limit")
                 return None
-            if user.data:
+            data = response.data
+            if data:
                 return Account(
                     username=username,
-                    user_id=str(user.data.id),
-                    display_name=user.data.name,
-                    description=user.data.description,
+                    user_id=str(data.id),
+                    display_name=data.name,
+                    description=data.description,
                 )
             return None
         except Exception as e:
@@ -99,6 +100,8 @@ class XScraper:
         username: str,
         since: datetime | None = None,
         max_results: int = 100,
+        user_id: str | None = None,
+        display_name: str | None = None,
     ) -> list[Tweet]:
         """Fetch recent tweets from a user.
 
@@ -106,6 +109,8 @@ class XScraper:
             username: Twitter username without @
             since: Fetch tweets after this time (default: 24 hours ago)
             max_results: Maximum number of tweets to fetch
+            user_id: Cached user ID (skips API lookup if provided)
+            display_name: Cached display name
 
         Returns:
             List of Tweet objects
@@ -116,27 +121,30 @@ class XScraper:
         tweets: list[Tweet] = []
 
         try:
-            # First get user ID
-            user = await self._execute_with_retry(
-                self.client.get_user, username=username
-            )
-            if not user or not user.data:
-                if not user:
-                    logger.warning(f"Skipped fetching user {username} due to rate limit")
-                else:
-                    logger.warning(f"User not found: {username}")
-                return tweets
+            # Use cached user_id if available, otherwise fetch from API
+            if not user_id:
+                user_response = await self._execute_with_retry(
+                    self.client.users.get_by_username, username=username
+                )
+                if not user_response or not user_response.data:
+                    if not user_response:
+                        logger.warning(f"Skipped fetching user {username} due to rate limit")
+                    else:
+                        logger.warning(f"User not found: {username}")
+                    return tweets
 
-            user_id = user.data.id
-            display_name = user.data.name
+                user_id = user_response.data.id
+                display_name = user_response.data.name
 
-            # Small delay between getting user and getting tweets
-            await asyncio.sleep(1)
+                # Small delay between getting user and getting tweets
+                await asyncio.sleep(1)
 
-            # Fetch tweets - format time as RFC3339 (Twitter API requirement)
+            # Fetch tweets - format time as RFC3339 (X API requirement)
             start_time_str = since.strftime("%Y-%m-%dT%H:%M:%SZ")
-            response = await self._execute_with_retry(
-                self.client.get_users_tweets,
+
+            # get_posts returns an iterator; we only need the first page
+            posts_iter = await self._execute_with_retry(
+                self.client.users.get_posts,
                 id=user_id,
                 start_time=start_time_str,
                 max_results=min(max_results, 100),
@@ -150,28 +158,34 @@ class XScraper:
                 media_fields=["url", "preview_image_url"],
             )
 
-            if not response:
+            if not posts_iter:
                 logger.warning(f"Skipped fetching tweets from {username} due to rate limit")
                 return tweets
 
-            if not response.data:
+            # Get first page from the iterator
+            response = next(posts_iter, None)
+            if not response or not response.data:
                 logger.info(f"No recent tweets from {username}")
                 return tweets
 
             # Process media
             media_map = {}
-            if response.includes and "media" in response.includes:
-                for media in response.includes["media"]:
-                    media_map[media.media_key] = getattr(media, "url", None) or getattr(
-                        media, "preview_image_url", None
-                    )
+            includes = getattr(response, "includes", None)
+            if includes:
+                media_list = getattr(includes, "media", None)
+                if media_list:
+                    for media in media_list:
+                        media_map[media.media_key] = getattr(media, "url", None) or getattr(
+                            media, "preview_image_url", None
+                        )
 
             for tweet in response.data:
                 # Check if retweet or reply
                 is_retweet = False
                 is_reply = False
-                if tweet.referenced_tweets:
-                    for ref in tweet.referenced_tweets:
+                referenced_tweets = getattr(tweet, "referenced_tweets", None)
+                if referenced_tweets:
+                    for ref in referenced_tweets:
                         if ref.type == "retweeted":
                             is_retweet = True
                         elif ref.type == "replied_to":
@@ -179,12 +193,15 @@ class XScraper:
 
                 # Get media URLs
                 media_urls = []
-                if tweet.attachments and "media_keys" in tweet.attachments:
-                    for key in tweet.attachments["media_keys"]:
-                        if key in media_map and media_map[key]:
-                            media_urls.append(media_map[key])
+                attachments = getattr(tweet, "attachments", None)
+                if attachments:
+                    media_keys = getattr(attachments, "media_keys", None)
+                    if media_keys:
+                        for key in media_keys:
+                            if key in media_map and media_map[key]:
+                                media_urls.append(media_map[key])
 
-                metrics = tweet.public_metrics or {}
+                metrics = getattr(tweet, "public_metrics", None)
 
                 tweets.append(
                     Tweet(
@@ -193,10 +210,10 @@ class XScraper:
                         author_display_name=display_name,
                         content=tweet.text,
                         created_at=tweet.created_at,
-                        likes=metrics.get("like_count", 0),
-                        retweets=metrics.get("retweet_count", 0),
-                        replies=metrics.get("reply_count", 0),
-                        views=metrics.get("impression_count"),
+                        likes=getattr(metrics, "like_count", 0) if metrics else 0,
+                        retweets=getattr(metrics, "retweet_count", 0) if metrics else 0,
+                        replies=getattr(metrics, "reply_count", 0) if metrics else 0,
+                        views=getattr(metrics, "impression_count", None) if metrics else None,
                         url=f"https://x.com/{username}/status/{tweet.id}",
                         is_retweet=is_retweet,
                         is_reply=is_reply,
@@ -214,18 +231,16 @@ class XScraper:
     async def get_tweets_for_accounts(
         self,
         accounts: list[Account],
-        since: datetime | None = None,
+        since_map: dict[str, datetime | None] | None = None,
     ) -> list[Tweet]:
         """Fetch tweets from multiple accounts with rate limiting.
 
-        This method implements careful rate limiting to avoid hitting Twitter API limits:
-        - Delays between each account request
-        - Batch processing with longer delays between batches
-        - Progress logging for monitoring
+        Uses cached user_id from Account objects to skip API lookups.
+        Uses per-account since times for incremental fetching.
 
         Args:
-            accounts: List of accounts to fetch tweets from
-            since: Fetch tweets after this time
+            accounts: List of accounts to fetch tweets from (with cached user_id)
+            since_map: Per-account since times {username: datetime}. Falls back to 24h ago.
 
         Returns:
             List of all tweets sorted by creation time (newest first)
@@ -233,6 +248,7 @@ class XScraper:
         all_tweets: list[Tweet] = []
         total_accounts = len(accounts)
         self._request_count = 0
+        since_map = since_map or {}
 
         logger.info(
             f"Starting to fetch tweets from {total_accounts} accounts "
@@ -252,12 +268,19 @@ class XScraper:
                 )
                 await asyncio.sleep(self.rate_limit_batch_delay)
 
+            since = since_map.get(account.username)
+            since_label = since.strftime("%m-%d %H:%M") if since else "24h ago"
             logger.info(
-                f"[{account_num}/{total_accounts}] Fetching tweets from @{account.username}..."
+                f"[{account_num}/{total_accounts}] Fetching tweets from @{account.username} (since {since_label})..."
             )
 
             try:
-                tweets = await self.get_recent_tweets(account.username, since=since)
+                tweets = await self.get_recent_tweets(
+                    account.username,
+                    since=since,
+                    user_id=account.user_id,
+                    display_name=account.display_name,
+                )
                 all_tweets.extend(tweets)
                 logger.info(
                     f"[{account_num}/{total_accounts}] Got {len(tweets)} tweets from @{account.username}"

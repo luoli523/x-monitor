@@ -37,12 +37,10 @@ class Settings(BaseSettings):
     summary_cron_hour: int = 8
     summary_cron_minute: int = 0
 
-    # Rate limiting (for free API tier - conservative settings)
-    rate_limit_delay: float = 15.0  # Delay between each account (seconds)
-    rate_limit_batch_size: int = 3  # Number of accounts per batch
-    rate_limit_batch_delay: float = 180.0  # Delay between batches (seconds) - 3 minutes
-    rate_limit_max_retries: int = 5  # Max retries on rate limit error
-    rate_limit_retry_base_delay: float = 120.0  # Base delay for exponential backoff (seconds)
+    # Rate limiting (pay-per-use plan)
+    rate_limit_delay: float = 2.0  # Delay between each account (seconds)
+    rate_limit_batch_size: int = 10  # Number of accounts per batch
+    rate_limit_batch_delay: float = 10.0  # Delay between batches (seconds)
 
     # Database
     database_path: str = "data/x_monitor.db"

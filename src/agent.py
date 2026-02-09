@@ -24,8 +24,6 @@ class XMonitorAgent:
             rate_limit_delay=settings.rate_limit_delay,
             rate_limit_batch_size=settings.rate_limit_batch_size,
             rate_limit_batch_delay=settings.rate_limit_batch_delay,
-            rate_limit_max_retries=settings.rate_limit_max_retries,
-            rate_limit_retry_base_delay=settings.rate_limit_retry_base_delay,
         )
         self.analyzer = LLMAnalyzer(
             api_key=settings.openai_api_key,
@@ -66,6 +64,9 @@ class XMonitorAgent:
     async def add_account(self, username: str) -> Account | None:
         """Add a new account to monitor.
 
+        Fetches user info from API and caches user_id, display_name, description
+        so that subsequent runs don't need to call the API for user info.
+
         Args:
             username: Twitter username without @
 
@@ -81,7 +82,7 @@ class XMonitorAgent:
             logger.warning(f"Account @{username} already being monitored")
             return existing
 
-        # Fetch account info from Twitter
+        # Fetch account info from API (includes user_id for caching)
         account = await self.scraper.get_user_info(username)
         if account:
             await self.storage.add_account(account)
@@ -99,13 +100,62 @@ class XMonitorAgent:
         """List all monitored accounts."""
         return await self.storage.get_accounts()
 
+    async def _ensure_account_info(self, accounts: list[Account]) -> list[Account]:
+        """Ensure all accounts have cached user_id. Fetch from API if missing.
+
+        Returns updated account list with user_id populated.
+        """
+        updated = []
+        for account in accounts:
+            if account.user_id:
+                updated.append(account)
+                continue
+
+            # Need to fetch user info from API
+            logger.info(f"Fetching user info for @{account.username} (first time)...")
+            info = await self.scraper.get_user_info(account.username)
+            if info and info.user_id:
+                # Cache to accounts.json
+                await self.storage.update_account_info(
+                    account.username, info.user_id, info.display_name, info.description
+                )
+                account.user_id = info.user_id
+                account.display_name = info.display_name or account.display_name
+                account.description = info.description or account.description
+                logger.info(f"Cached user info for @{account.username} (id={info.user_id})")
+            else:
+                logger.warning(f"Could not fetch user info for @{account.username}, will retry next run")
+            updated.append(account)
+
+        cached_count = sum(1 for a in updated if a.user_id)
+        logger.info(f"Account info: {cached_count}/{len(updated)} have cached user_id")
+        return updated
+
+    async def _build_since_map(self, accounts: list[Account]) -> dict[str, datetime | None]:
+        """Build per-account since times from last saved tweet timestamps."""
+        since_map: dict[str, datetime | None] = {}
+        default_since = datetime.now(timezone.utc) - timedelta(days=1)
+
+        for account in accounts:
+            last_time = await self.storage.get_last_tweet_time(account.username)
+            if last_time:
+                since_map[account.username] = last_time
+                logger.debug(f"@{account.username}: incremental since {last_time.strftime('%m-%d %H:%M')}")
+            else:
+                since_map[account.username] = default_since
+                logger.debug(f"@{account.username}: first run, since 24h ago")
+
+        return since_map
+
     async def run_daily_job(self) -> DailySummary | None:
         """Run the daily monitoring job.
 
         This is the main job that:
-        1. Fetches tweets from all monitored accounts
-        2. Analyzes them with LLM
-        3. Sends notifications
+        1. Ensures all accounts have cached user info
+        2. Incrementally fetches only new tweets since last run
+        3. Saves tweets to local database
+        4. Analyzes recent tweets with LLM
+        5. Sends notifications
 
         Returns:
             DailySummary if successful, None otherwise
@@ -120,17 +170,30 @@ class XMonitorAgent:
 
         logger.info(f"Monitoring {len(accounts)} accounts")
 
-        # Calculate time range (last 24 hours)
-        since = datetime.now(timezone.utc) - timedelta(days=1)
+        # Step 1: Ensure all accounts have cached user_id
+        accounts = await self._ensure_account_info(accounts)
+
+        # Step 2: Build per-account since times for incremental fetch
+        since_map = await self._build_since_map(accounts)
+
         summary_date = datetime.now(timezone.utc)
 
-        # Fetch tweets
-        tweets = await self.scraper.get_tweets_for_accounts(accounts, since=since)
-        logger.info(f"Fetched {len(tweets)} tweets")
+        # Step 3: Fetch only new tweets
+        new_tweets = await self.scraper.get_tweets_for_accounts(accounts, since_map=since_map)
+        logger.info(f"Fetched {len(new_tweets)} new tweets from API")
+
+        # Step 4: Save new tweets to local database
+        if new_tweets:
+            saved = await self.storage.save_tweets(new_tweets)
+            logger.info(f"Saved {saved} new tweets to database")
+
+        # Step 5: Read all tweets from last 24h for analysis (from local DB)
+        analysis_since = datetime.now(timezone.utc) - timedelta(days=1)
+        tweets = await self.storage.get_tweets_since(analysis_since)
+        logger.info(f"Loaded {len(tweets)} tweets from local DB for analysis")
 
         if not tweets:
-            logger.info("No new tweets found")
-            # Still create a summary
+            logger.info("No tweets to analyze")
             summary = DailySummary(
                 date=summary_date,
                 accounts_monitored=len(accounts),

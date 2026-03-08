@@ -132,6 +132,140 @@
       "user_id": "39125788",
       "display_name": "Ethan Mollick",
       "description": "Professor @Wharton studying AI, innovation & startups. Democratizing education using tech\nBook: https://t.co/CSmipbJ2jV\nSubstack: https://t.co/UIBhxu4bgq"
+{
+  "accounts": [
+    {
+      "username": "karpathy",
+      "note": "LLM之王（从零教你造大模型）",
+      "user_id": "33836629",
+      "display_name": "Andrej Karpathy",
+      "description": "Building @EurekaLabsAI. Previously Director of AI @ Tesla, founding team @ OpenAI, CS231n/PhD @ Stanford. I like to train large deep neural nets."
+    },
+    {
+      "username": "steipete",
+      "note": "OpenClaw缔造者（实战黑马）",
+      "user_id": "25401953",
+      "display_name": "Peter Steinberger 🦞",
+      "description": "Polyagentmorous ClawFather. Came back from retirement to mess with AI and help a lobster take over the world @openclaw🦞"
+    },
+    {
+      "username": "gregisenberg",
+      "note": "创业点子之神（每天脑洞大开）",
+      "user_id": "14642331",
+      "display_name": "GREG ISENBERG",
+      "description": "I drop startup ideas daily. Host @startupideaspod. CEO: @latecheckoutplz we build companies like @ideabrowser, @meetLCA, @boringmarketer etc"
+    },
+    {
+      "username": "rileybrown",
+      "note": "Vibecode天皇（氛围感拉满的代码）",
+      "user_id": "1601693298707628035",
+      "display_name": "Riley Brown",
+      "description": "Cofounder of @vibecodeapp (the #1 full stack vibe coding platform)"
+    },
+    {
+      "username": "corbin_braun",
+      "note": "Cursor之王（AI写代码最爽工具）",
+      "user_id": "1594925779778871296",
+      "display_name": "corbin",
+      "description": "founder @thumio + @techsnif · backed by _cafe_"
+    },
+    {
+      "username": "jackfriks",
+      "note": "单人App之王（真实数据说话）",
+      "user_id": "1699591741043527680",
+      "display_name": "jack friks",
+      "description": "curious guy creating things @ https://t.co/HXWladhJaA - up and coming wife guy"
+    },
+    {
+      "username": "levelsio",
+      "note": "单人创业之神（不靠VC硬核造产品）",
+      "user_id": "1577241403",
+      "display_name": "@levelsio",
+      "description": "🇪🇺https://t.co/NdorAWqJC3 @euacc \n📸https://t.co/lAyoqmSBRX $110k/m \n🏡https://t.co/1oqUgfD6CZ $36K/m \n🛰https://t.co/ZHSvI2wjyW $38K/m \n🌍https://t.co/UXK5AFqCaQ $17K/m \n👙https://t.co/RyXpqGuFM3 $17K/m \n💾@pieter $0K/m"
+    },
+    {
+      "username": "marclou",
+      "note": "单人创业之神（又一个狠人）",
+      "user_id": "2311987360",
+      "display_name": "Marc Lou",
+      "description": "🛡️ https://t.co/MZc8tG9xWi $31K/m\n🧑‍💻 https://t.co/Y30jsaHwz9 $24K/m\n📈 https://t.co/3EDxln5mdi $18K/m\n⚡️ https://t.co/vatLDmi9UG $17K/m\n🍜 https://t.co/r07EpGSYJ2 $0/m\n🧾 https://t.co/7olaOzV8Xd $0/m\n🧬 https://t.co/SfrVXVtmdA 0$/m\n\n+20 https://t.co/4zCWHGJp1S"
+    },
+    {
+      "username": "EXM7777",
+      "note": "AI运营+系统之王（全栈效率拉满）",
+      "user_id": "3033730635",
+      "display_name": "Machina",
+      "description": "running ai-powered agencies | https://t.co/fMOmHWBgHG"
+    },
+    {
+      "username": "eptwts",
+      "note": "AI赚钱推特之王（变现套路最狠）",
+      "user_id": "1360265495363145730",
+      "display_name": "EP",
+      "description": "emperor @aifrontrunners"
+    },
+    {
+      "username": "godofprompt",
+      "note": "Prompt之神（调教AI的顶级艺术）",
+      "user_id": "1643695629665722379",
+      "display_name": "God of Prompt",
+      "description": "🔑 Sharing AI Prompts, Tips & Tricks. The Biggest Collection of AI Prompts & Guides for ChatGPT, Gemini, Grok, Claude, & Midjourney AI → https://t.co/vwZZ2VSfsN"
+    },
+    {
+      "username": "vasuman",
+      "note": "AI Agent之王（智能体实战派）",
+      "user_id": "1268982340090355712",
+      "display_name": "vas",
+      "description": "CEO @varickai | AI Agents for Enterprise: https://t.co/wNoXwYlxhd | prev. @meta"
+    },
+    {
+      "username": "AmirMushich",
+      "note": "AI广告之王（投放直接起飞）",
+      "user_id": "249795230",
+      "display_name": "AmirMušić",
+      "description": "Creative Director. Ex-Warner Music, PepsiCo, Spotify. Fusing 10+ yr of brand & ad design with AI. Collabs: amirmushichba@gmail.com"
+    },
+    {
+      "username": "0xROAS",
+      "note": "AI UGC之王（病毒式用户内容狂魔）",
+      "user_id": "1336528268766441474",
+      "display_name": "0x ROAS",
+      "description": "everything’s high risk if you’re a p*ssy. I treat ad spend like a venture capitalist: seeking asymmetric returns."
+    },
+    {
+      "username": "egeberkina",
+      "note": "AI图像之王（画面感炸裂）",
+      "user_id": "1790083138959400961",
+      "display_name": "Ege",
+      "description": "Art Director | Daily Image Drops | AI Explorer | Prompt & JSON & SREF share"
+    },
+    {
+      "username": "MengTo",
+      "note": "AI落地页之王（转化率机器）",
+      "user_id": "5797422",
+      "display_name": "Meng To",
+      "description": "Founder at @designcodeio and https://t.co/Kpiogf2zVu. I teach designers code and developers design."
+    },
+    {
+      "username": "rryssf_",
+      "note": "自动化之王（懒人福音）",
+      "user_id": "1666103476945031168",
+      "display_name": "Robert Youssef",
+      "description": "AI Automation Architect, Co-Founder @godofprompt"
+    },
+    {
+      "username": "kloss_xyz",
+      "note": "系统架构之王（底层硬核）",
+      "user_id": "1470503969789251589",
+      "display_name": "klöss",
+      "description": "AI Educator, Designer & Developer | @psychanon CEO Building AI-powered brands, workflows, and apps."
+    },
+    {
+      "username": "emollick",
+      "note": "AI科学之王（最靠谱研究解读）",
+      "user_id": "39125788",
+      "display_name": "Ethan Mollick",
+      "description": "Professor @Wharton studying AI, innovation & startups. Democratizing education using tech\nBook: https://t.co/CSmipbJ2jV\nSubstack: https://t.co/UIBhxu4bgq"
     },
     {
       "username": "Hesamation",
@@ -139,6 +273,192 @@
       "user_id": "1836078160653246464",
       "display_name": "ℏεsam",
       "description": "ai/ml • giving birth to agents in my spare time"
+    },
+    {
+      "user_id": "dotey",
+      "note": "中文AI圈高频信息源，Prompt工程、AI实战、前沿工具与模型解读"
+    },
+    {
+      "user_id": "op7418",
+      "note": "AIGC周刊主理人，AI绘画、视频生成、设计工作流和工具趋势"
+    },
+    {
+      "user_id": "Gorden_Sun",
+      "note": "AI资讯日报和前沿动态整理，追踪新模型、新产品和热点变化"
+    },
+    {
+      "user_id": "xiaohu",
+      "note": "科技与AI工具分享，ChatGPT、AI工具导航、产品资讯和使用技巧"
+    },
+    {
+      "user_id": "shao__meng",
+      "note": "Web与AI技术实践，AI论文、开源项目和产品落地思考"
+    },
+    {
+      "user_id": "thinkingjimmy",
+      "note": "AI工具普及与产品体验，面向普通用户和工具使用者"
+    },
+    {
+      "user_id": "goocarlos",
+      "note": "AI开发与产品结合，偏开发者视角，工具构建和应用实践"
+    },
+    {
+      "user_id": "Tumeng05",
+      "note": "AI创业和LLM、RAG、Agent方向，技术趋势与商业落地"
+    },
+    {
+      "user_id": "AxtonLiu",
+      "note": "把复杂AI技术讲清楚，AI产品、开发实践和工具应用心得"
+    },
+    {
+      "user_id": "haibun",
+      "note": "AI视频和生成式视觉创作，创意类AI方向"
+    },
+    {
+      "user_id": "nishuang",
+      "note": "AI工具、生产力提升和趋势观察，信息密度高"
+    },
+    {
+      "user_id": "vista8",
+      "note": "AI产品、工作流、Vibe Coding和趋势判断，兼具产品感和表达能力"
+    },
+    {
+      "user_id": "lijigang",
+      "note": "深度Prompt探索者，AI思考、创意应用和方法论总结"
+    },
+    {
+      "user_id": "kaifulee",
+      "note": "华人AI领域最具影响力意见领袖之一，产业、创业和大模型趋势判断"
+    },
+    {
+      "user_id": "WaytoAGI",
+      "note": "中文AI知识整理型头部账号，体系化学习和追踪前沿资源"
+    },
+    {
+      "user_id": "xicilion",
+      "note": "LLM、AI实战和开发者视角，信息密度较高"
+    },
+    {
+      "user_id": "oran_ge",
+      "note": "AI创业者视角，关注Agent、产品机会和模型能力变化"
+    },
+    {
+      "user_id": "AlchainHust",
+      "note": "AI编程、AI Native产品和具体工具实操，内容落地性强"
+    },
+    {
+      "user_id": "SamuelQZQ",
+      "note": "AI工具、AI认知和开发者实践，一线新工具和新玩法"
+    },
+    {
+      "user_id": "elliotchen100",
+      "note": "AI工具拆解、项目观察和开发者生态内容，追踪新项目"
+    },
+    {
+      "user_id": "Hayami_kiraa",
+      "note": "AI Builder和内容创作者路线，连接产品、创作和增长"
+    },
+    {
+      "user_id": "berryxia",
+      "note": "创意型AI应用、提示词、自动化和生产流"
+    }
+  ]
+}
+    },
+    {
+      "username": "Hesamation",
+      "note": "AI/ML综合之王（深度学习前沿）",
+      "user_id": "1836078160653246464",
+      "display_name": "ℏεsam",
+      "description": "ai/ml • giving birth to agents in my spare time"
+    },
+    {
+      "user_id": "dotey",
+      "note": "中文AI圈高频信息源，Prompt工程、AI实战、前沿工具与模型解读"
+    },
+    {
+      "user_id": "op7418",
+      "note": "AIGC周刊主理人，AI绘画、视频生成、设计工作流和工具趋势"
+    },
+    {
+      "user_id": "Gorden_Sun",
+      "note": "AI资讯日报和前沿动态整理，追踪新模型、新产品和热点变化"
+    },
+    {
+      "user_id": "xiaohu",
+      "note": "科技与AI工具分享，ChatGPT、AI工具导航、产品资讯和使用技巧"
+    },
+    {
+      "user_id": "shao__meng",
+      "note": "Web与AI技术实践，AI论文、开源项目和产品落地思考"
+    },
+    {
+      "user_id": "thinkingjimmy",
+      "note": "AI工具普及与产品体验，面向普通用户和工具使用者"
+    },
+    {
+      "user_id": "goocarlos",
+      "note": "AI开发与产品结合，偏开发者视角，工具构建和应用实践"
+    },
+    {
+      "user_id": "Tumeng05",
+      "note": "AI创业和LLM、RAG、Agent方向，技术趋势与商业落地"
+    },
+    {
+      "user_id": "AxtonLiu",
+      "note": "把复杂AI技术讲清楚，AI产品、开发实践和工具应用心得"
+    },
+    {
+      "user_id": "haibun",
+      "note": "AI视频和生成式视觉创作，创意类AI方向"
+    },
+    {
+      "user_id": "nishuang",
+      "note": "AI工具、生产力提升和趋势观察，信息密度高"
+    },
+    {
+      "user_id": "vista8",
+      "note": "AI产品、工作流、Vibe Coding和趋势判断，兼具产品感和表达能力"
+    },
+    {
+      "user_id": "lijigang",
+      "note": "深度Prompt探索者，AI思考、创意应用和方法论总结"
+    },
+    {
+      "user_id": "kaifulee",
+      "note": "华人AI领域最具影响力意见领袖之一，产业、创业和大模型趋势判断"
+    },
+    {
+      "user_id": "WaytoAGI",
+      "note": "中文AI知识整理型头部账号，体系化学习和追踪前沿资源"
+    },
+    {
+      "user_id": "xicilion",
+      "note": "LLM、AI实战和开发者视角，信息密度较高"
+    },
+    {
+      "user_id": "oran_ge",
+      "note": "AI创业者视角，关注Agent、产品机会和模型能力变化"
+    },
+    {
+      "user_id": "AlchainHust",
+      "note": "AI编程、AI Native产品和具体工具实操，内容落地性强"
+    },
+    {
+      "user_id": "SamuelQZQ",
+      "note": "AI工具、AI认知和开发者实践，一线新工具和新玩法"
+    },
+    {
+      "user_id": "elliotchen100",
+      "note": "AI工具拆解、项目观察和开发者生态内容，追踪新项目"
+    },
+    {
+      "user_id": "Hayami_kiraa",
+      "note": "AI Builder和内容创作者路线，连接产品、创作和增长"
+    },
+    {
+      "user_id": "berryxia",
+      "note": "创意型AI应用、提示词、自动化和生产流"
     }
   ]
 }
